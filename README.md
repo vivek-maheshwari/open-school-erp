@@ -122,11 +122,23 @@ Attendance marking and marks entry queue locally on mobile and sync when connect
 
 ---
 
+## Documentation
+
+| Document | Contents |
+|---|---|
+| [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) | The problem, current production state, and why this is being open-sourced |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Multi-tenancy, authentication, offline handling, financial integrity, security posture |
+| [FEATURES.md](FEATURES.md) | Complete feature reference by module, with web/mobile/portal coverage |
+| [ENGINEERING.md](ENGINEERING.md) | The 40-category security audit, correctness practices, and how bugs get diagnosed |
+| [ROADMAP.md](ROADMAP.md) | Path from production system to something any school can adopt |
+
+---
+
 ## Engineering approach
 
 A few practices that shaped the codebase, included here because they explain the structure more than a feature list does.
 
-**Security auditing as a build phase.** The project went through a systematic security and correctness audit — threat model, per-module review, and a tracked remediation pass. Findings covered multi-tenant isolation, authentication and session handling, input validation, file upload safety, rate limiting, audit-log integrity, and SQL/formula injection in exports. Fixes carry references to the audit item that motivated them.
+**Security auditing as a build phase.** Before going live with real schools, the platform went through a structured audit across **40 categories** — from multi-tenant isolation and session handling to money math, concurrency, accessibility, and backup integrity. **326 findings** were catalogued and prioritized; **233 are still cited by ID in code comments** at the exact line where the fix lives, so a future maintainer learns which failure a defensive check prevents instead of deleting it as noise. See [ENGINEERING.md](ENGINEERING.md).
 
 **Server-side enforcement, always.** Client-side gating is treated as user experience, never as security. Where a feature hides something from a user, the corresponding API returns nothing — so an outdated app build or a direct API call is equally covered.
 
