@@ -12,14 +12,18 @@ Every feature listed here is built and running in production. Organized by modul
 |---|---|---|
 | Student records | W M | Full profile, guardians, contacts, medical, documents |
 | New admission | W M | Auto-generated admission number, photo capture |
-| Bulk import | W | Excel with dry-run preview before applying |
+| Bulk import | W M | Excel with dry-run preview before applying |
 | Bulk update | W | Edit many records at once from a spreadsheet |
 | Bulk photo upload | W M | Excel + ZIP, matched by admission number |
 | Promotion | W | Move a cohort to the next class and session |
 | Sibling groups | W | Admin-approved; enables one-login-many-children |
 | Student leaves | W M P | Apply, review, approve/reject |
-| Transfer certificate | W | Customizable layout, PDF, issue register |
-| Password management | W M | Issue, reset, and bulk credential export |
+| Transfer certificate | W M | Customizable layout and HTML templates, register numbering by book and serial |
+| Password management | W M | Issue, reset, and bulk credential export; a password the user chose themselves is never shown to the office |
+| Student info | W M | House, height, weight, blood group, eyesight — entered class by class, with Excel import/export |
+| Roll numbers | W M | Alphabetical per class and section, on demand |
+| Information sheet | W | Printable six-per-page student cards with photo |
+| Photo export | W M | ZIP named by admission number, plus a missing-photos list |
 
 Sibling grouping deserves a note: it drives the parent profile switcher, so it's admin-approved rather than inferred from a shared phone number. Two unrelated families can share a number through a typo, and auto-linking them would expose one family's child to another.
 
@@ -36,6 +40,8 @@ Sibling grouping deserves a note: it drives the parent profile switcher, so it's
 | Monthly register | W M P | Per-student month view with totals |
 | Absence notifications | — | Automatic push to parents on save |
 | Class-teacher scoping | W M | A teacher sees only their own section |
+| School calendar | W M P | Holidays, vacations, exams, PTMs; holidays pre-fill the register |
+| Back-dating control | W M | Marking a past date needs its own permission |
 
 ---
 
@@ -55,7 +61,10 @@ The largest module.
 | Dues report | W M | Filterable, exportable |
 | Fee Statement export | W M | Register-style Bill/Deposit/Dues by due date |
 | Defaulter list | W | Configurable threshold |
-| Receipts | W M | PDF and thermal print |
+| Receipts | W M | Browser print and on-device PDF; edit in place under the same number; reprints keep the dues as on the day of issue |
+| Exemptions | W M | Removing a fee from a student is remembered, so re-assignment never re-bills it |
+| Concession import | W M | A whole school's discounts from one spreadsheet |
+| Fee setup export | W M | Structure, installments, assignments and ledger to Excel or JSON |
 | Fee visibility toggle | W | Per-tenant: hide fees from students entirely |
 
 ### UPI payments
@@ -77,15 +86,19 @@ Approval creates the fee transaction and flips the request in one transaction, g
 |---|---|---|
 | Terms and exams | W M | Per session, with soft-delete and restore |
 | Exam-class setup | W M | Subjects, max marks, passing marks |
-| Marks entry | W M | Offline-safe; AB/ML statuses distinct from zero |
-| Grade schemes | W | Custom bands; per class or section |
-| Co-scholastic | W | Separate grading for non-academic areas |
-| Teacher remarks | W M | Per subject and per class |
-| Result publishing | W M | Per exam-class, notifies students |
-| Tabulation sheet | W M | Full class grid with totals and rank |
-| Report cards | W | PDF |
+| Marks entry | W M | AB / ML / NA statuses distinct from zero; papers split into parts, each with its own status; grade-only subjects |
+| Term formulas | W M | Per class: best-of, average, sum, rescale, round — defined as data |
+| Grade schemes | W M | Custom bands per class or section; pick-from-a-list scales for activities |
+| Co-scholastic | W M | Report-card blocks, remark bank, per-student fields (homework, PTM, attendance) |
+| Teacher remarks | W M | Per subject and per class, with Excel import/export |
+| Result publishing | W M | Per class or per section, frozen snapshot, notifies students |
+| Ranks | W M | Within section or class; 1-2-2-4 or 1-2-2-3; medical-leave and new-admission students in or out |
+| Tabulation sheet | W M | Full class grid with totals and rank, print and Excel |
+| Report cards | W M | School-owned HTML templates; filled or hollow stars; printed on the phone as PDFs |
+| Term setup file | W M | Export a whole term's setup, import it into another term or school |
+| Syllabus & datesheet | W M P | Published independently of exams |
 | Fee-defaulter gate | W P | Optionally lock results until dues cleared |
-| Student electives | W | Per-student subject selection |
+| Student electives | W M | Per-student subject selection, tick-grid Excel import |
 
 The absent/medical distinction matters more than it looks: a student absent for one paper shouldn't have a zero averaged into their percentage, and the policy for how each status affects numerator and denominator is configurable per school.
 
@@ -153,7 +166,8 @@ Fare changes floor at the amount already paid, so a reduction never creates a ne
 |---|---|---|
 | Gate pass | W M | Digital approval or physical signature mode |
 | Approval chain | W M | Push to approvers, approve in-app |
-| Printing | W | Thermal and A4 layouts |
+| Printing | W M | Thermal and A4 layouts |
+| Staff out-pass | W M | Request from own phone, approve, mark out and back in |
 
 ---
 
@@ -173,12 +187,17 @@ Fare changes floor at the amount already paid, so a reduction never creates a ne
 
 | Feature | Surfaces | Notes |
 |---|---|---|
-| Roles and permissions | W M | 68 features, granular actions |
+| Roles and permissions | W M | 73 features, 231 keys; export/import between schools; a read-only role for app-store reviewers |
 | Permission matrix | W M | Visual grid editor |
 | Academic sessions | W | Create, activate, manage |
 | Session repair tools | W | Fix registered sessions from admission dates |
 | General settings | W | Branding, contact, UPI, portal toggles |
+| Change log | W M | Automatic before/after of every data change, with a readable summary per event |
 | Audit logs | W M | Filterable, hash-chained |
+| Dashboard | W M | Cards chosen per role, attendance progress by section, a "today" panel |
+| Notification switches | W | Per school, all off or one kind at a time |
+| App usage | W M | Who has the app installed and opened, who doesn't |
+| Forced update | W | Per-school minimum app version |
 | Backup and restore | W | Per-tenant, scheduled and manual |
 | Super admin console | W | Provision and manage school tenants |
 
@@ -204,9 +223,11 @@ Available on both mobile and web:
 
 ## Cross-cutting
 
-**Offline-first** where it matters — attendance and marks entry queue locally and sync with idempotency protection.
+**Offline-first** where it matters — attendance, fee collection, leave requests and tasks queue locally and sync with idempotency protection.
 
-**Excel and PDF exports** throughout, styled to match the layouts schools already use on paper.
+**Excel and PDF exports** throughout, styled to match the layouts schools already use on paper, with one consistent file-naming rule; printed by the browser or made into a PDF on the phone — no print server.
+
+**Old computers supported** — every screen renders on Chrome / Edge 109, the last versions available on Windows 7, still common in school offices.
 
 **India-specific handling** — timezone-correct dates everywhere (a date is the school's date, not the server's), Indian numbering in currency display, UPI payment integration, and an April–March academic session model.
 
