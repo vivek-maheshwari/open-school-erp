@@ -10,6 +10,8 @@ What's done, what's next, and what stands between the current state and a platfo
 
 The system works. The gap isn't functionality — it's everything that lets a school adopt it **without the person who built it.**
 
+**Since the first version of this roadmap:** an exam engine where each school's grading rules, formulas and report-card layouts are data rather than code; receipts editable in place; an automatic before-and-after change log; browser and iPhone push; a school calendar; staff out-passes; per-school notification switches; forced app updates; printing moved entirely to the browser and the phone; and a second full review that verified 191 suspected issues and fixed the 169 real ones.
+
 ---
 
 ## Phase 1 — Preparing for public source release
@@ -49,13 +51,16 @@ Currently India-specific by design: April–March academic sessions, Indian numb
 ## Phase 3 — Sustainability
 
 **Plugin architecture for school-specific customization.**
-Every school differs in fee structure, grading scheme, and report format. Today those differences would require a fork. A plugin approach — custom report templates, pluggable fee rules, configurable grade calculations — lets a school adapt the system without diverging from upstream.
+Every school differs in fee structure, grading scheme, and report format. Grading is already there: exam formulas, grade scales, printed wording and report-card / tabulation templates are per-school data, imported from files. Fee rules and other reports still need the same treatment, so a school can adapt the system without diverging from upstream.
 
 **Continued security review.**
 The threat model was built for a private deployment. Public source widens it: attackers can read the code, and self-hosting schools will vary enormously in operational competence. Secure defaults, hardening guides, and an ongoing review cadence matter more once the code is public than they did before.
 
 **Test coverage expansion.**
 The suite is strongest where mistakes cost money and weakest at the edges. Fee arithmetic, permission resolution, and multi-tenant isolation deserve deeper property-based coverage — these are the places where a silent error surfaces as a wrong number on a receipt rather than a crash.
+
+**A second-generation architecture.**
+A rewrite is in planning that keeps every rule the current system has learned — each one catalogued with its source and test — while moving to one app for browser, Android and iPhone, one database with a schema per school, and offline-first daily work. The current system stays live and maintained until each school has moved, with every record migrated and checked value by value against the old system before any school switches.
 
 **Performance at scale.**
 Current tenants are hundreds of students. The architecture should hold at thousands, but "should" is not "verified." Load testing, query analysis, and index review before a large school discovers a limit in production.
