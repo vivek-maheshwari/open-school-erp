@@ -1,173 +1,94 @@
-# School ERP — Open-Source K-12 School Management Platform
+# Roadmap
 
-A self-hostable, white-label ERP for K-12 schools. One deployment serves many schools, each with its own isolated database, branding, and mobile app.
-
-Built to replace the paper registers, spreadsheets, and WhatsApp groups that most schools still run on — with something a school can own outright rather than rent.
-
-**Status:** Production. Running live for real schools with ~900 students, ~70 staff, and daily attendance, fee collection, examinations, and parent communication.
+What's done, what's next, and what stands between the current state and a platform any school can adopt on its own.
 
 ---
 
-## Why this exists
+## Where the project is now
 
-School ERP software is a solved problem for well-funded institutions and an unsolved one for everyone else. Commercial platforms charge per-student annual fees, hold the data, and put customization behind support tickets. Schools that can't afford them run on paper: attendance in registers, fees in ledgers, marks in spreadsheets, announcements in WhatsApp groups.
+**In production.** Live schools, real students and staff, daily attendance, fee collection, examinations, and parent communication. Branded Android apps published on the Play Store.
 
-The costs are quiet but real. A parent can't find out their child was absent until the monthly meeting. A fee receipt exists on one carbon copy. Report card season means a week of manual arithmetic. Nobody can answer "how many students have unpaid transport fees for August" without an afternoon of work.
+The system works. The gap isn't functionality — it's everything that lets a school adopt it **without the person who built it.**
 
-This project exists so that a school with no IT budget can self-host a system that handles all of it, brand it as their own, and never pay per student.
-
----
-
-## What it does
-
-**68 permission-gated features across 16 modules.** Every screen listed here is built and in production use.
-
-### Students
-Admissions and full student records, promotion between sessions, sibling-group management, document and photo handling, bulk import/update from Excel, and transfer certificate generation with a customizable form layout.
-
-### Attendance
-Daily marking for students and staff, offline-capable on mobile (marks queue on the phone and sync when signal returns), monthly registers, bulk upload via a register-matrix spreadsheet, and automatic absence notifications to parents.
-
-### Fees
-The largest module. Fee structures per class and session, installments with due dates, discounts (percentage or fixed, stackable, targeted at specific installments or at fines), late fines, previous-session carry-forward balances, and collection with partial payments and multiple payment modes.
-
-Reporting includes dues reports, defaulter lists, and a register-style **Fee Statement** export that lays out Bill / Deposit / Dues by due-date across class bands — the format schools actually use on paper.
-
-**UPI payments:** parents pay from the mobile app via deep link or QR, upload the payment screenshot, and the office approves it — creating the receipt atomically. Every submission has a visible status; a rejection states why.
-
-### Examinations
-Terms, exams, per-class subject setup, marks entry (offline-safe), absent/medical statuses that don't count as zero, configurable grade schemes, co-scholastic grading, teacher remarks at subject and class level, tabulation sheets, and report cards. Results publish per class, with an optional fee-defaulter gate that locks results until dues are cleared.
-
-### Transport
-Routes, vehicles, fee tiers, and per-student assignment. Monthly fee generation with configurable clubbing (monthly, bi-monthly, quarterly), mid-session fare revision with a revert path, per-student fare adjustment, waivers down to individual months, and opt-out handling.
-
-### Accounting
-Accounts and account heads, income and expense tracking, cheque lifecycle management (pending → cleared/declined, with reversal), vendor records, and financial statements. Fee collection posts into accounting automatically with double-entry integrity.
-
-### Academics
-Classes and sections with per-section class teachers, subjects and electives, timetables, homework with submission tracking, and study notes.
-
-### Communication
-Direct messaging between staff, students, and parents, plus broadcasts to the whole school, all staff, all students, or specific classes and sections. Push notifications via Firebase Cloud Messaging reach the right device even when several family members share one phone.
-
-### Front Desk
-Gate-pass workflow with a digital approval chain or a physical signature mode, printable in thermal and A4 formats.
-
-### Staff
-Employee records, attendance, leave requests and approvals, role assignment, and an internal task system for delegating work between staff.
-
-### Administration
-Role-based access control with 68 features and granular actions, academic session management, audit logging with a tamper-evident hash chain, database backup and restore, and a super-admin console for provisioning new schools.
+**Since the first version of this roadmap:** an exam engine where each school's grading rules, formulas and report-card layouts are data rather than code; receipts editable in place; an automatic before-and-after change log; browser and iPhone push; a school calendar; staff out-passes; per-school notification switches; forced app updates; printing moved entirely to the browser and the phone; and a second full review that verified 191 suspected issues and fixed the 169 real ones.
 
 ---
 
-## Who uses it
+## Phase 1 — Preparing for public source release
 
-The platform serves four distinct audiences from one codebase:
+*In progress.*
 
-- **Administrators and office staff** — the full back-office on web
-- **Teachers** — attendance, marks, homework, and their own leave, primarily on mobile
-- **Students and parents** — a portal with attendance, results, fees, homework, and messaging
-- **Operators** — a super-admin console for managing multiple school tenants
+**Separating deployment configuration from application code.**
+Credentials, tenant definitions, signing keys, and host-specific settings currently live alongside the code. All of it needs to move behind configuration with documented examples, and the git history needs to be rewritten so nothing sensitive survives in past commits. This is the single blocking item.
 
-Staff whose own children study at the school can switch between their staff account and their child's portal on the same device, with a password gate when moving back up to staff.
+**Installation path for non-experts.**
+A school administrator is not a DevOps engineer. The target is: bare VPS to running, branded instance by following a document — with a scripted setup for the common case and a manual path for the rest.
 
----
+**Contributor documentation.**
+Architecture decision records explaining *why* the multi-tenant model, the offline queue, and the permission design are shaped the way they are. Module guides. A codebase navigable by someone who didn't write it.
 
-## Architecture
-
-### Multi-tenancy
-A master database holds the school registry; **each school gets its own dedicated database**. Tenant resolution happens per request from the authenticated user's school code — there is no shared-table filtering, so one school's query cannot reach another's data even if application logic fails.
-
-### White-label mobile apps
-Each school gets its own branded Android app — own name, icon, splash screen, colors, package ID, and Play Store listing — generated from a single codebase via per-tenant configuration. A school's API URL is resolved at launch from a central bootstrap endpoint, so a domain change never requires an app rebuild.
-
-### Access control
-Authentication is JWT-based. Permissions are **not** embedded in the token; they're fetched separately, so a permission change takes effect without forcing re-login. Every API route independently verifies permission — the UI hides what you can't do, but the server is what enforces it.
-
-Sessions carry a token-version claim, so a password change or forced logout invalidates tokens on every other device.
-
-### Offline support
-Attendance marking and marks entry queue locally on mobile and sync when connectivity returns, with idempotency keys so a replayed request never double-writes. This matters in practice: classrooms often have no signal.
+**License and governance.**
+Apache-2.0 is chosen. Still needed: contribution guidelines, a code of conduct, security disclosure policy, and a clear statement of what the project will and won't accept.
 
 ---
 
-## Tech stack
+## Phase 2 — Making adoption realistic
 
-| Layer | Technology |
-|---|---|
-| Web | Next.js 16, React 19, TypeScript, Tailwind CSS |
-| Mobile | Expo SDK 55, React Native 0.83, Expo Router, TypeScript |
-| Database | PostgreSQL (multi-tenant), Prisma ORM |
-| Auth | JWT with token versioning, bcrypt |
-| Notifications | Firebase Cloud Messaging |
-| Documents | Puppeteer (PDF), SheetJS (Excel) |
-| Deployment | Docker, Nginx Proxy Manager, VPS |
+**Onboarding a school without the author.**
+The real test of an open-source project is whether a stranger can deploy it. This means seed data, a guided first-run that creates the academic session and classes, sample fee structures, and an import path from the spreadsheets a school already keeps.
 
----
+**Demo instance.**
+A public sandbox with fictional data, so a school can evaluate the platform before committing to a server.
 
-## Scale
+**iOS builds.**
+The mobile apps are Android-only today. The codebase is cross-platform; the work is Apple provisioning, per-tenant build configuration, and App Store review — meaningful effort, no architectural change.
 
-| | |
-|---|---|
-| API endpoints | 247 |
-| Web pages | 80 |
-| Mobile screens | 81 |
-| Database models | 85 |
-| Permission-gated features | 68 |
-| TypeScript source files | 667 |
-| Documentation files | 179 |
-| Automated tests | 400+ across web and mobile |
-| Commits | ~400 |
+**Internationalization.**
+Currently India-specific by design: April–March academic sessions, Indian numbering in currency display, UPI payments, and CBSE-shaped examination structures. Making session models, currency, date formats, and payment integrations configurable opens the platform to schools elsewhere.
 
 ---
 
-## Documentation
+## Phase 3 — Sustainability
 
-| Document | Contents |
-|---|---|
-| [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) | The problem, current production state, and why this is being open-sourced |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Multi-tenancy, authentication, offline handling, financial integrity, security posture |
-| [FEATURES.md](FEATURES.md) | Complete feature reference by module, with web/mobile/portal coverage |
-| [ENGINEERING.md](ENGINEERING.md) | The 40-category security audit, correctness practices, and how bugs get diagnosed |
-| [ROADMAP.md](ROADMAP.md) | Path from production system to something any school can adopt |
+**Plugin architecture for school-specific customization.**
+Every school differs in fee structure, grading scheme, and report format. Grading is already there: exam formulas, grade scales, printed wording and report-card / tabulation templates are per-school data, imported from files. Fee rules and other reports still need the same treatment, so a school can adapt the system without diverging from upstream.
 
----
+**Continued security review.**
+The threat model was built for a private deployment. Public source widens it: attackers can read the code, and self-hosting schools will vary enormously in operational competence. Secure defaults, hardening guides, and an ongoing review cadence matter more once the code is public than they did before.
 
-## Engineering approach
+**Test coverage expansion.**
+The suite is strongest where mistakes cost money and weakest at the edges. Fee arithmetic, permission resolution, and multi-tenant isolation deserve deeper property-based coverage — these are the places where a silent error surfaces as a wrong number on a receipt rather than a crash.
 
-A few practices that shaped the codebase, included here because they explain the structure more than a feature list does.
+**A second-generation architecture.**
+A rewrite is in planning that keeps every rule the current system has learned — each one catalogued with its source and test — while moving to one app for browser, Android and iPhone, one database with a schema per school, and offline-first daily work. The current system stays live and maintained until each school has moved, with every record migrated and checked value by value against the old system before any school switches.
 
-**Security auditing as a build phase.** Before going live with real schools, the platform went through a structured audit across **40 categories** — from multi-tenant isolation and session handling to money math, concurrency, accessibility, and backup integrity. **326 findings** were catalogued and prioritized; **233 are still cited by ID in code comments** at the exact line where the fix lives, so a future maintainer learns which failure a defensive check prevents instead of deleting it as noise. See [ENGINEERING.md](ENGINEERING.md).
-
-**Server-side enforcement, always.** Client-side gating is treated as user experience, never as security. Where a feature hides something from a user, the corresponding API returns nothing — so an outdated app build or a direct API call is equally covered.
-
-**Fail-open where hiding data would be worse than showing it.** Configuration flags that control visibility default to the pre-existing behaviour, so deploying a new toggle can never silently blank a working module for schools that never asked for it.
-
-**Regression tests pinned at the level a bug was observed.** When a defect is fixed, the test asserts the user-visible outcome ("can this staff member log in with the password the admin was shown?") rather than the internal call, so the same class of bug can't reappear through a different path.
-
-**Documentation as a first-class artifact.** 179 documents covering architecture, per-module behaviour, API contracts, deployment runbooks, disaster recovery, migration procedures, and the security audit. Non-obvious invariants are documented where they're enforced, not only in prose.
+**Performance at scale.**
+Current tenants are hundreds of students. The architecture should hold at thousands, but "should" is not "verified." Load testing, query analysis, and index review before a large school discovers a limit in production.
 
 ---
 
-## Roadmap
+## Deliberately not planned
 
-- Public open-source release under a permissive license
-- Installation and onboarding guides for schools without dedicated IT staff
-- iOS builds alongside the existing Android apps
-- Contributor documentation and a plugin approach for school-specific customization
-- Internationalization and multi-currency support
+Stating these keeps the scope honest:
 
----
-
-## Project status and license
-
-Currently in production with live schools while the codebase is prepared for public release — removing deployment-specific configuration, expanding contributor documentation, and finalizing license selection.
-
-The intent is a permissive open-source license, so any school can deploy, modify, and rebrand the platform without cost or restriction.
+- **Hosted SaaS offering.** The point is that schools self-host and own their data. A paid hosted version would recreate the problem the project exists to solve.
+- **Per-student licensing, in any form.** Free means free.
+- **Feature parity with every commercial ERP.** Library management, transport GPS tracking, and biometric integration are all reasonable asks and all better served as plugins than as core.
 
 ---
 
-## Contact
+## Where Claude Max fits
 
-This project is being prepared for open-source release. For questions about the platform, deployment, or contributing, please open an issue once the repository is public.
+The remaining work is not conceptually hard. It's a large volume of careful, unglamorous engineering — and it's precisely the work that decides whether this becomes a platform other schools use or stays a system that runs well for three of them.
+
+**Documentation for non-technical adopters** is the largest single gap. Installation guides, troubleshooting, and operational runbooks written for a school administrator rather than a developer.
+
+**Contributor onboarding** — architecture decision records, module guides, and the codebase readability work that lets someone else contribute meaningfully.
+
+**Security hardening** as the threat model widens with public source.
+
+**iOS builds and internationalization** to reach beyond the current Android, India-focused deployment.
+
+**Test coverage** in the areas where silent errors are expensive.
+
+The bottleneck on this project has never been ideas. It's the distance between working software and adoptable software — and that distance is measured in documentation, hardening, and careful review rather than new features.
