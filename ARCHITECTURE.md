@@ -53,7 +53,7 @@ The token also records **which table authenticated it**. Staff can exist as eith
 
 ### Permissions
 
-Permission keys follow `module.feature.action` — for example `fees.dues.view` or `exams.marks.edit`. There are **68 permission-gated features** with granular actions.
+Permission keys follow `module.feature.action` — for example `fees.dues.view` or `exams.marks.edit`. There are **73 permission-gated features with 231 permission keys**. The catalogue is one list on the server, served to both apps, and a test fails the build if code uses a key the catalogue lacks, or the catalogue carries a key nothing uses. When a key is split into a finer one (for example, separating "export passwords" from "view students"), every role that held the old power is granted the new key automatically, so no one silently loses access.
 
 Permissions are deliberately **not** embedded in the JWT. They're fetched from a dedicated endpoint after login, which means:
 
@@ -72,11 +72,11 @@ Some capabilities aren't role-based but relationship-based. A class teacher may 
 
 ### Web (Next.js 16 / React 19)
 
-The administrative surface: 80 pages covering every module, plus a student/parent portal and a super-admin console. Server-side API routes handle all data access; the browser never talks to the database.
+The administrative surface: 93 pages covering every module, plus a student/parent portal and a super-admin console. Server-side API routes handle all data access; the browser never talks to the database.
 
 ### Mobile (Expo SDK 55 / React Native)
 
-81 screens covering the staff workflows that happen away from a desk — attendance, marks entry, homework, tasks, leave — and the full student/parent portal.
+99 screens covering the staff workflows that happen away from a desk — attendance, marks entry, homework, tasks, leave — and the full student/parent portal.
 
 Each school receives its **own branded app**: name, icon, splash screen, theme color, Android package ID, and Play Store listing, all generated from one codebase through per-tenant configuration files. Adding a school is a configuration change and a build, not a fork.
 
@@ -86,7 +86,7 @@ At launch, the app resolves its school's API URL from a central bootstrap endpoi
 
 ## 4. Offline capability
 
-Classrooms frequently have no usable signal, and attendance and marks entry are exactly the tasks performed there. Both work offline:
+Classrooms frequently have no usable signal, and attendance is exactly the task performed there. Attendance, fee collection, leave requests and tasks work offline:
 
 1. The action is written to a local queue and the UI confirms immediately
 2. When connectivity returns, the queue replays against the server
@@ -103,6 +103,8 @@ Push delivery uses Firebase Cloud Messaging, with device tokens bound to identit
 - one phone can be registered for **several siblings**, so any child's notification reaches the parent
 - a staff member whose children study at the school receives both their staff notifications and their children's
 - the send pipeline **deduplicates by device token**, so a shared phone alerts once per event rather than once per matching identity
+
+Browsers and iPhone home-screen apps receive the same notifications through web push, with guards so a shared computer never shows one school's or one person's notification to another. Each school can switch notifications off entirely or one kind at a time (fee receipts, attendance, messages and so on), enforced at the single point every notification passes through.
 
 Notifications carry the identity they belong to. Tapping one switches to the correct profile before navigating — passwordless when descending to a child, password-gated when returning to a staff account.
 
@@ -124,9 +126,12 @@ Financial correctness carried the strictest requirements in the project.
 
 ## 7. Audit logging
 
-Every mutating action writes an audit record: who, what, when, the affected entity, and before/after values. Passwords are never logged.
+Two layers:
 
-Audit records are chained with a **tamper-evident hash** — each entry incorporates the previous entry's hash, so removing or editing a historical row invalidates everything after it. For fee collection and grade changes, that detectability matters more than the log itself.
+- **An automatic change log.** Every create, update and delete on every school table is captured at the database-client level — a full before-and-after copy of each record, the fields that changed, who did it, from which device and screen. No feature can forget to log, because no feature writes the log; a bulk change of 2,000 rows logs 2,000 rows. Entries are kept only if the change actually commits, are written after the reply so logging never slows or fails a save, and secrets are masked. Viewing is never logged.
+- **A business log** for context the data alone doesn't carry ("fee collection, receipt R/…"), joined to the change log by request.
+
+Business-log records are chained with a **tamper-evident hash** — each entry incorporates the previous entry's hash, so removing or editing a historical row invalidates everything after it. For fee collection and grade changes, that detectability matters more than the log itself.
 
 ---
 
@@ -135,8 +140,8 @@ Audit records are chained with a **tamper-evident hash** — each entry incorpor
 Schools run on paper output, so exports are treated as a first-class feature rather than an afterthought.
 
 - **Excel** — styled workbooks matching the layouts schools already use, including register-style fee statements with class bands, subtotals, and due-date column groups
-- **PDF** — report cards, receipts, transfer certificates, and gate passes rendered through headless Chrome
-- **Templates** — the transfer certificate layout is admin-customizable without code changes
+- **Printing and PDF** — report cards, receipts, bills, transfer certificates and gate passes are rendered by the user's own browser, or made into a PDF on the phone itself. There is no server-side PDF service; fonts are embedded so a card lays out identically on every device
+- **Templates** — transfer certificates, report cards and tabulation sheets are HTML templates the school can import and edit without code changes or an app release
 
 Exports sanitize cell content against formula injection, since spreadsheets execute what looks like a formula and these files are opened on school office machines.
 
@@ -144,9 +149,9 @@ Exports sanitize cell content against formula injection, since spreadsheets exec
 
 ## 9. Testing and verification
 
-400+ automated tests across web and mobile, weighted toward the areas where a silent failure is expensive: fee arithmetic, discount stacking, permission resolution, multi-tenant isolation, authentication and session invalidation, timezone handling, and export integrity.
+About 1,750 automated tests across web and mobile, weighted toward the areas where a silent failure is expensive: fee arithmetic, discount stacking, permission resolution, multi-tenant isolation, authentication and session invalidation, timezone handling, and export integrity.
 
-The guiding practice: **a regression test asserts the user-visible outcome, not the internal call.** When a bug is fixed, the test states the property that was violated — "can this staff member log in with the password the admin was shown?" — so the same class of failure can't return through a different code path. Several tests exist specifically because they failed first and proved a fix wrong before it shipped.
+The guiding practice: **a regression test asserts the user-visible outcome, not the internal call.** When a bug is fixed, the test states the property that was violated — "can this staff member log in with the password the admin was shown?" — so the same class of failure can't return through a different code path. Several tests exist specifically because they failed first and proved a fix wrong before it shipped. Every printed total is tested against the rows printed beneath it — a class of bug that was found four separate times before that rule existed.
 
 ---
 
@@ -177,6 +182,7 @@ Two principles run through the fixes:
 ## 11. Operations
 
 - **Deployment** — Docker containers behind Nginx Proxy Manager on a VPS
+- **App updates** — the Android apps check Google Play for a newer version, and each school can set a minimum version that forces an update
 - **Backups** — scheduled per-tenant database backups with off-site replication and generational retention
 - **Disaster recovery** — documented restore procedures with a rehearsal schedule
 - **Migrations** — controlled per-tenant schema push with documented runbooks for changes needing data migration
