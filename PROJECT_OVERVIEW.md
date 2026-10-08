@@ -39,15 +39,15 @@ This is not a prototype or a demo. Features have been shaped by production incid
 
 | | |
 |---|---|
-| API endpoints | 247 |
-| Web pages | 80 |
-| Mobile screens | 81 |
-| Database models | 85 |
-| Permission-gated features | 68 |
-| TypeScript source files | 667 |
-| Documentation files | 179 |
-| Automated tests | 400+ |
-| Commits | ~400 |
+| API endpoints | 310 |
+| Web pages | 93 |
+| Mobile screens | 99 |
+| Database models | 102 |
+| Permission-gated features | 73 (231 permission keys) |
+| TypeScript source files | ~1,160 |
+| Documentation files | 210 |
+| Automated tests | ~1,750 (1,498 web + 249 mobile) |
+| Commits | ~670 |
 
 ---
 
@@ -55,13 +55,15 @@ This is not a prototype or a demo. Features have been shaped by production incid
 
 **Database-per-tenant isolation.** Each school gets its own database, not a shared table with a tenant column. A query bug cannot cross a school boundary because the connection has no access to the other database.
 
-**Offline-first where it matters.** Attendance and marks entry work without signal and sync later, with idempotency so replays don't double-write. Classrooms often have no connectivity, and those are exactly the tasks performed there.
+**Offline-first where it matters.** Attendance, fee collection and leave requests work without signal and sync later, with idempotency so replays don't double-write. Classrooms and fee counters often have no connectivity, and those are exactly the tasks performed there.
+
+**Each school's rules as data, not code.** Exam formulas, report-card layouts, printed wording, rank style and grade scales are per-school configuration and templates. A new school with a different board or report format is set up by importing files, not by changing the codebase.
 
 **Real financial rigor.** Fee collection is transactional and race-safe. Reversals restore state rather than deleting records. Fare reductions floor at amounts already paid. Audit logs are hash-chained and tamper-evident.
 
 **White-label mobile apps from one codebase.** Adding a school is configuration plus a build, not a fork.
 
-**Documentation treated as product.** 179 documents covering architecture, module behaviour, deployment, disaster recovery, and the security audit — because a school without IT staff can't read source to find out how backups work.
+**Documentation treated as product.** 210 documents covering architecture, module behaviour, deployment, disaster recovery, and the security audit — because a school without IT staff can't read source to find out how backups work.
 
 ---
 
