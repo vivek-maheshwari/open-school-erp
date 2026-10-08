@@ -33,6 +33,16 @@ A representative example, paraphrased from a real comment:
 
 That comment is worth more than the three lines of code it sits above.
 
+### The second review (October 2026)
+
+A year of features later, the whole system was reviewed again — every module, both apps, against the live data of three schools. **191 suspected issues** were listed, and each was verified against the code and the data before anything changed: **169 were real and were fixed**; the rest were shown to be false alarms or already handled, with the reason recorded. Fixes were batched by risk — security and data loss first, then fee and exam-result rules, then everything else — and each carries a test.
+
+The review also turned up patterns worth writing down as rules, because each had caused more than one bug:
+
+- **A printed total must be computed from the rows printed under it.** Four different totals (a receipt column, a bill's total due, a statement's subtotals, a dues card) were computed by a different expression over a different set than their rows, so a parent adding up the column got a different figure.
+- **A zero amount is real.** A fully discounted fee collects ₹0; code that treated 0 as "missing" fell back to the pre-discount bill and overstated income.
+- **A shared helper only helps if every caller uses it**, and **a guard added to one writer must be checked on its siblings** — nearly every serious finding was the second code path that never received the fix the first one had.
+
 ---
 
 ## Security model
@@ -86,7 +96,7 @@ The pattern in all three: **the obvious fix would have been wrong**, and in one 
 
 ## Testing
 
-400+ automated tests across web and mobile, weighted toward areas where silent failure is expensive: fee arithmetic, discount stacking, permission resolution, multi-tenant isolation, session invalidation, timezone handling, and export integrity.
+About 1,750 automated tests across web and mobile (1,498 web, 249 mobile), weighted toward areas where silent failure is expensive: fee arithmetic, discount stacking, permission resolution, multi-tenant isolation, session invalidation, timezone handling, and export integrity.
 
 **Tests assert the user-visible property, not the internal call.** After the login bug above, the regression test doesn't check that a particular function was invoked — it asks *"can this staff member log in with the password the administrator was shown?"* That phrasing is what makes the test survive refactors and catch the same class of bug arriving through a different path.
 
@@ -96,7 +106,7 @@ Several tests exist specifically because they **failed first and disproved a fix
 
 ## Documentation
 
-179 documents covering architecture, per-module behaviour, API contracts, deployment runbooks, disaster recovery, migration procedures, and the security audit.
+210 documents covering architecture, per-module behaviour, API contracts, deployment runbooks, disaster recovery, migration procedures, and the security audit.
 
 Two conventions keep it useful rather than decorative:
 
